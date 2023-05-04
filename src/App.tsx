@@ -1,18 +1,47 @@
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
-
-import { TextField, FormControl, MenuItem, Button } from '@mui/material';
+import { TextField, MenuItem, Button } from '@mui/material';
 import { Stack } from '@mui/system';
 import { useState } from 'react';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 
 // regex   ^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[*.!@$%^&(){}[\]:;<>,.?\/~_+-=|]).{8,40}$
 
 interface IFormInputs {
   email: string;
   password: string;
+  confirmPassword: string;
   nip: string;
   phone: string;
   role: string;
 }
+
+const maxPhone = 9;
+const maxNip = 10;
+
+const schema = yup.object().shape({
+  email: yup.string().email().required(),
+  password: yup
+    .string()
+    .min(8, 'To- short password')
+    .matches(/[0-9]/, 'Password requires a number')
+    .matches(/[a-z]/, 'Password requires a lowercase letter')
+    .matches(/[A-Z]/, 'Password requires a uppercase letter')
+    .matches(/[^\w]/, 'Password requires a symbol')
+    .required(),
+  confirmPassword: yup
+    .string()
+    .oneOf([yup.ref('password'), 'Password must be the same'])
+    .required(),
+  nip: yup
+    .string()
+    .min(10, 'Too short NIP')
+    .max(10, 'Too long NIP')
+    .matches(/^[0-9]$/, 'NIP must contains only numbers')
+    .required(),
+  phone: yup.string().max(9),
+  role: yup.string().required(),
+});
 
 export default function App() {
   const {
@@ -21,10 +50,12 @@ export default function App() {
     watch,
     control,
     formState: { errors },
-  } = useForm<IFormInputs>();
+  } = useForm<IFormInputs>({ resolver: yupResolver(schema) });
   const onSubmit: SubmitHandler<IFormInputs> = (data) => console.log(data);
 
   const [selectVal, setSelectVal] = useState<number | string>('');
+  const [phone, setPhone] = useState('');
+  const [nip, setNip] = useState('');
 
   const roles = [
     { id: 1, role: 'Administrator' },
@@ -49,7 +80,28 @@ export default function App() {
     }
   };
 
-  console.log('email:', watch('email')); // watch input value by passing the name of it
+  const handleChangePhone = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const regex = /^[0-9\b]+$/;
+    const { value } = e.target;
+    if (value === '' || (regex.test(value) && value.length <= maxPhone)) {
+      setPhone(value);
+    }
+  };
+
+  const handleChangeNip = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { value } = e.target;
+    const regex = /^[0-9\b]+$/;
+    if (value === '' || (regex.test(value) && value.length <= maxNip)) {
+      setNip(value);
+    }
+  };
+
+  // console.log('password:', watch('password')); // watch input value by passing the name of it
+  console.log(errors);
 
   return (
     <>
@@ -67,10 +119,7 @@ export default function App() {
                 label="Email"
                 type="email"
                 variant="standard"
-                {...register('email', {
-                  required: 'Email is required',
-                  pattern: /^\S+@\S+$/i,
-                })}
+                {...register('email')}
                 error={!!errors.email}
                 helperText={errors.email?.message}
               />
@@ -86,13 +135,25 @@ export default function App() {
                 label="Password"
                 variant="standard"
                 type="password"
-                {...register('password', {
-                  required: true,
-                  pattern:
-                    /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[*.!@$%^&(){}[\]:;<>,.?/~_+-=|]).{8,40}$/i,
-                })}
-                error={!!errors.email}
-                helperText={errors.email?.message}
+                {...register('password')}
+                error={!!errors.password}
+                helperText={errors.password?.message}
+              />
+            )}
+          />
+
+          <Controller
+            name="confirmPassword"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Password"
+                variant="standard"
+                type="password"
+                {...register('confirmPassword')}
+                error={!!errors.confirmPassword}
+                helperText={errors.confirmPassword?.message}
               />
             )}
           />
@@ -105,12 +166,11 @@ export default function App() {
                 {...field}
                 label="NIP"
                 variant="standard"
-                {...register('nip', {
-                  required: 'NIP is required',
-                  pattern: /^[0-9]{10}$/i,
-                })}
-                error={!!errors.email}
-                helperText={errors.email?.message}
+                {...register('nip')}
+                error={!!errors.nip}
+                helperText={errors.nip?.message}
+                onChange={(e) => handleChangeNip(e)}
+                value={nip}
               />
             )}
           />
@@ -125,10 +185,12 @@ export default function App() {
                 variant="standard"
                 {...register('phone', {
                   required: false,
-                  maxLength: 12,
+                  maxLength: 9,
                 })}
-                error={!!errors.email}
-                helperText={errors.email?.message}
+                error={!!errors.phone}
+                helperText={errors.phone?.message}
+                onChange={handleChangePhone}
+                value={phone}
               />
             )}
           />
@@ -144,8 +206,8 @@ export default function App() {
                 label="Role"
                 onChange={(e) => handleChange(e)}
                 value={selectVal}
-                error={!!errors.email}
-                helperText={errors.email?.message}
+                error={!!errors.role}
+                helperText={errors.role?.message}
               >
                 {rolesMenu}
               </TextField>
