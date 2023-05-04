@@ -1,5 +1,13 @@
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
-import { TextField, MenuItem, Button } from '@mui/material';
+import {
+  TextField,
+  MenuItem,
+  Button,
+  Stepper,
+  Step,
+  StepLabel,
+  Box,
+} from '@mui/material';
 import { Stack } from '@mui/system';
 import { useState } from 'react';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -22,6 +30,8 @@ interface IFormInputs {
   phone: string;
   role: string;
 }
+
+const steps = ['Fill form', 'Check form'];
 
 const schema = yup.object().shape({
   email: yup
@@ -61,17 +71,47 @@ export default function App() {
   } = useForm<IFormInputs>({ resolver: yupResolver(schema) });
   const onSubmit: SubmitHandler<IFormInputs> = (data) => console.log(data);
 
-  const [role, setRole] = useState<number | string>('');
-  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [nip, setNip] = useState('');
+  const [phone, setPhone] = useState('');
+  const [role, setRole] = useState<number | string>('');
 
   const [edit, setEdit] = useState(true);
+
+  const [activeStep, setActiveStep] = useState(0);
 
   const rolesMenu = roles.map((role) => (
     <MenuItem key={role.id} value={role.id}>
       {role.role}
     </MenuItem>
   ));
+
+  const handleNext = () => {
+    setActiveStep((prevActiveStep) => prevActiveStep + 1);
+  };
+
+  const handleBack = () => {
+    setActiveStep((prevActiveStep) => prevActiveStep - 1);
+  };
+
+  const handleClick = () => {
+    setEdit((prev) => !prev);
+    edit ? handleNext() : handleBack();
+  };
+
+  const handleRegister = () => {
+    alert('sent');
+    setEmail('');
+    setPassword('');
+    setConfirmPassword('');
+    setNip('');
+    setPhone('');
+    setRole('');
+    setEdit(true);
+    setActiveStep(0);
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -92,14 +132,23 @@ export default function App() {
     }
 
     switch (e.target.name) {
+      case 'email':
+        setEmail(value);
+        break;
+      case 'password':
+        setPassword(value);
+        break;
+      case 'confirmPassword':
+        setConfirmPassword(value);
+        break;
       case 'nip':
         setNip(value);
         break;
-      case 'role':
-        setRole(value);
-        break;
       case 'phone':
         setPhone(value);
+        break;
+      case 'role':
+        setRole(value);
         break;
     }
   };
@@ -130,12 +179,38 @@ export default function App() {
   console.log(!!errors.nip);
 
   return (
-    <>
+    <Box
+      sx={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%,-50%)',
+        border: '2px solid #ccc',
+        borderRadius: 5,
+        p: 10,
+      }}
+    >
+      <Box width={400} sx={{ mb: 5 }}>
+        <Stepper activeStep={activeStep}>
+          {steps.map((label) => {
+            const stepProps: { completed?: boolean } = {};
+            const labelProps: {
+              optional?: React.ReactNode;
+            } = {};
+            return (
+              <Step key={label} {...stepProps}>
+                <StepLabel {...labelProps}>{label}</StepLabel>
+              </Step>
+            );
+          })}
+        </Stepper>
+      </Box>
       {/* "handleSubmit" will validate your inputs before invoking "onSubmit" */}
       <form onSubmit={handleSubmit(onSubmit)} noValidate>
         {/* register your input into the hook by invoking the "register" function */}
 
         <Stack spacing={2} width={400}>
+          {!edit && <p>Is it everything correct ?</p>}
           <Controller
             name="email"
             control={control}
@@ -148,7 +223,9 @@ export default function App() {
                 {...register('email')}
                 error={!!errors.email}
                 helperText={errors.email?.message}
+                value={email}
                 onChange={(e) => handleChange(e, regexEmail)}
+                disabled={!edit}
               />
             )}
           />
@@ -165,6 +242,9 @@ export default function App() {
                 {...register('password')}
                 error={!!errors.password}
                 helperText={errors.password?.message}
+                value={password}
+                onChange={(e) => handleChange(e)}
+                disabled={!edit}
               />
             )}
           />
@@ -175,12 +255,15 @@ export default function App() {
             render={({ field }) => (
               <TextField
                 {...field}
-                label="Password"
+                label="Confirm Password"
                 variant="standard"
                 type="password"
                 {...register('confirmPassword')}
                 error={!!errors.confirmPassword}
                 helperText={errors.confirmPassword?.message}
+                value={confirmPassword}
+                onChange={(e) => handleChange(e)}
+                disabled={!edit}
               />
             )}
           />
@@ -196,8 +279,9 @@ export default function App() {
                 {...register('nip')}
                 error={!!errors.nip}
                 helperText={errors.nip?.message}
-                onChange={(e) => handleChange(e, regexNip, nipLength)}
                 value={nip}
+                onChange={(e) => handleChange(e, regexNip, nipLength)}
+                disabled={!edit}
               />
             )}
           />
@@ -213,8 +297,9 @@ export default function App() {
                 {...register('phone')}
                 error={!!errors.phone}
                 helperText={errors.phone?.message}
-                onChange={(e) => handleChange(e, regexPhone, phoneLength)}
                 value={phone}
+                onChange={(e) => handleChange(e, regexPhone, phoneLength)}
+                disabled={!edit}
               />
             )}
           />
@@ -228,19 +313,30 @@ export default function App() {
                 {...register('role')}
                 select
                 label="Role"
-                onChange={(e) => handleChange(e)}
-                value={role}
                 error={!!errors.role}
                 helperText={errors.role?.message}
+                value={role}
+                onChange={(e) => handleChange(e)}
+                disabled={!edit}
               >
                 {rolesMenu}
               </TextField>
             )}
           />
 
-          <Button type="submit" variant="contained">
-            Submit
+          <Button
+            type={edit ? 'submit' : 'button'}
+            variant="contained"
+            onClick={handleClick}
+          >
+            {edit ? 'Submit' : 'Edit'}
           </Button>
+
+          {!edit && (
+            <Button variant="contained" onClick={handleRegister}>
+              Register
+            </Button>
+          )}
 
           {/* include validation with required or other standard HTML validation rules */}
 
@@ -250,6 +346,6 @@ export default function App() {
           {/* {errors.email && <span>This field is required</span>} */}
         </Stack>
       </form>
-    </>
+    </Box>
   );
 }
