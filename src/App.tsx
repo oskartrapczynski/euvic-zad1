@@ -5,6 +5,13 @@ import { useState } from 'react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 
+import { roles } from './form/roles';
+import { regexes } from './form/regexes';
+import { constraints } from './form/constraints';
+
+const { phoneLength, nipLength } = constraints;
+const { regexEmail, regexNip, regexPhone } = regexes;
+
 // regex   ^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[*.!@$%^&(){}[\]:;<>,.?\/~_+-=|]).{8,40}$
 
 interface IFormInputs {
@@ -16,14 +23,16 @@ interface IFormInputs {
   role: string;
 }
 
-const maxPhone = 9;
-const maxNip = 10;
-
 const schema = yup.object().shape({
-  email: yup.string().email().required(),
+  email: yup
+    .string()
+    .matches(/[@]/, 'email must contains @')
+    .matches(/[.]/, 'email must contains .')
+    .matches(regexEmail, 'email must be valid')
+    .required(),
   password: yup
     .string()
-    .min(8, 'To- short password')
+    .min(8, 'Too short password')
     .matches(/[0-9]/, 'Password requires a number')
     .matches(/[a-z]/, 'Password requires a lowercase letter')
     .matches(/[A-Z]/, 'Password requires a uppercase letter')
@@ -35,11 +44,10 @@ const schema = yup.object().shape({
     .required(),
   nip: yup
     .string()
-    .min(10, 'Too short NIP')
-    .max(10, 'Too long NIP')
-    .matches(/^[0-9]$/, 'NIP must contains only numbers')
+    .length(nipLength, `NIP must have ${nipLength} numbers`)
+
     .required(),
-  phone: yup.string().max(9),
+  phone: yup.string().length(phoneLength, `must be ${phoneLength} numbers`),
   role: yup.string().required(),
 });
 
@@ -53,18 +61,11 @@ export default function App() {
   } = useForm<IFormInputs>({ resolver: yupResolver(schema) });
   const onSubmit: SubmitHandler<IFormInputs> = (data) => console.log(data);
 
-  const [selectVal, setSelectVal] = useState<number | string>('');
+  const [role, setRole] = useState<number | string>('');
   const [phone, setPhone] = useState('');
   const [nip, setNip] = useState('');
 
-  const roles = [
-    { id: 1, role: 'Administrator' },
-    { id: 2, role: 'Dyrektor' },
-    { id: 3, role: 'Inspektor' },
-    { id: 4, role: 'Kierownik' },
-    { id: 5, role: 'Księgowy' },
-    { id: 6, role: 'Pełnomocnik' },
-  ];
+  const [edit, setEdit] = useState(true);
 
   const rolesMenu = roles.map((role) => (
     <MenuItem key={role.id} value={role.id}>
@@ -73,35 +74,60 @@ export default function App() {
   ));
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    regex?: RegExp,
+    maxLength?: number
   ) => {
-    if (e.target) {
-      setSelectVal(parseInt(e.target.value));
+    if (!e.target) {
+      return;
+    }
+    const { value } = e.target;
+
+    if (maxLength && value.length > maxLength) {
+      return;
+    }
+
+    if (regex && !regex.test(value)) {
+      return;
+    }
+
+    switch (e.target.name) {
+      case 'nip':
+        setNip(value);
+        break;
+      case 'role':
+        setRole(value);
+        break;
+      case 'phone':
+        setPhone(value);
+        break;
     }
   };
 
-  const handleChangePhone = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const regex = /^[0-9\b]+$/;
-    const { value } = e.target;
-    if (value === '' || (regex.test(value) && value.length <= maxPhone)) {
-      setPhone(value);
-    }
-  };
+  // const handleChangePhone = (
+  //   e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  // ) => {
+  //   const regex = /^[0-9\b]+$/;
+  //   const { value } = e.target;
+  //   if (value === '' || (regex.test(value) && value.length <= phoneLength)) {
+  //     setPhone(value);
+  //   }
+  // };
 
-  const handleChangeNip = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { value } = e.target;
-    const regex = /^[0-9\b]+$/;
-    if (value === '' || (regex.test(value) && value.length <= maxNip)) {
-      setNip(value);
-    }
-  };
+  // const handleChangeNip = (
+  //   e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  // ) => {
+  //   console.log(e);
+  //   const { value } = e.target;
+  //   const regex = /^[0-9\b]+$/;
+  //   if (value === '' || (regex.test(value) && value.length <= NipLength)) {
+  //     setNip(value);
+  //   }
+  // };
 
   // console.log('password:', watch('password')); // watch input value by passing the name of it
-  console.log(errors);
+  console.log('err:', errors);
+  console.log(!!errors.nip);
 
   return (
     <>
@@ -122,6 +148,7 @@ export default function App() {
                 {...register('email')}
                 error={!!errors.email}
                 helperText={errors.email?.message}
+                onChange={(e) => handleChange(e, regexEmail)}
               />
             )}
           />
@@ -169,7 +196,7 @@ export default function App() {
                 {...register('nip')}
                 error={!!errors.nip}
                 helperText={errors.nip?.message}
-                onChange={(e) => handleChangeNip(e)}
+                onChange={(e) => handleChange(e, regexNip, nipLength)}
                 value={nip}
               />
             )}
@@ -183,13 +210,10 @@ export default function App() {
                 {...field}
                 label="Phone *"
                 variant="standard"
-                {...register('phone', {
-                  required: false,
-                  maxLength: 9,
-                })}
+                {...register('phone')}
                 error={!!errors.phone}
                 helperText={errors.phone?.message}
-                onChange={handleChangePhone}
+                onChange={(e) => handleChange(e, regexPhone, phoneLength)}
                 value={phone}
               />
             )}
@@ -201,11 +225,11 @@ export default function App() {
             render={({ field }) => (
               <TextField
                 {...field}
-                {...register('role', { required: 'Role is required' })}
+                {...register('role')}
                 select
                 label="Role"
                 onChange={(e) => handleChange(e)}
-                value={selectVal}
+                value={role}
                 error={!!errors.role}
                 helperText={errors.role?.message}
               >
