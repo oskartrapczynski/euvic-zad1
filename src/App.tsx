@@ -7,15 +7,27 @@ import {
   Step,
   StepLabel,
   Box,
+  Typography,
 } from '@mui/material';
 import { Stack } from '@mui/system';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
+import { useDispatch } from 'react-redux';
 
 import { roles } from './form/roles';
 import { regexes } from './form/regexes';
 import { constraints } from './form/constraints';
+import {
+  clearForm,
+  setConfirmPassowrd,
+  setEmail,
+  setNip,
+  setPassword,
+  setPhone,
+  setRole,
+} from './redux/formSlice';
+import { useAppSelector } from './redux/store';
 
 const { phoneLength, nipLength } = constraints;
 const { regexEmail, regexNip, regexPhone } = regexes;
@@ -69,18 +81,31 @@ export default function App() {
     control,
     formState: { errors },
   } = useForm<IFormInputs>({ resolver: yupResolver(schema) });
-  const onSubmit: SubmitHandler<IFormInputs> = (data) => console.log(data);
+  const onSubmit: SubmitHandler<IFormInputs> = (data) => {
+    console.log(data);
+  };
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [nip, setNip] = useState('');
-  const [phone, setPhone] = useState('');
-  const [role, setRole] = useState<number | string>('');
+  // const [email, setEmail] = useState('');
+  const dispatch = useDispatch();
+  const { email, password, confirmPassword, nip, phone, role } = useAppSelector(
+    (state) => state.form
+  );
+
+  console.log('email:', email);
+
+  // const [password, setPassword] = useState('');
+  // const [confirmPassword, setConfirmPassword] = useState('');
+  // const [nip, setNip] = useState('');
+  // const [phone, setPhone] = useState('');
+  // const [role, setRole] = useState<number | string>('');
 
   const [edit, setEdit] = useState(true);
 
   const [activeStep, setActiveStep] = useState(0);
+
+  //redux
+
+  // const {email} = useSelector((state) => state.form)
 
   const rolesMenu = roles.map((role) => (
     <MenuItem key={role.id} value={role.id}>
@@ -96,19 +121,42 @@ export default function App() {
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
 
-  const handleClick = () => {
+  const handleEditClick = () => {
     setEdit((prev) => !prev);
-    edit ? handleNext() : handleBack();
+    handleBack();
   };
+
+  const handleSubmitClick = () => {
+    if (Object.keys(errors).length > 0) return;
+    if (email.length === 0) return;
+    if (password.length === 0) return;
+    if (confirmPassword.length === 0) return;
+    if (nip.length === 0) return;
+    if (phone.length === 0) return;
+    if (role.length === 0) return;
+    setEdit((prev) => !prev);
+    handleNext();
+  };
+
+  // const handleChangeEmail = (
+  //   e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  // ) => {
+  //   console.log(e.target.name);
+  //   dispatch(setEmail(e.target.value));
+  // };
 
   const handleRegister = () => {
     alert('sent');
-    setEmail('');
-    setPassword('');
-    setConfirmPassword('');
-    setNip('');
-    setPhone('');
-    setRole('');
+    // setEmail('');
+    // dispatch(setEmail(''));
+    // setPassword('');
+    // setConfirmPassword('');
+    // setNip('');
+    // setPhone('');
+    // setRole('');
+
+    dispatch(clearForm());
+
     setEdit(true);
     setActiveStep(0);
   };
@@ -133,50 +181,30 @@ export default function App() {
 
     switch (e.target.name) {
       case 'email':
-        setEmail(value);
+        // setEmail(value);
+        dispatch(setEmail(value));
         break;
       case 'password':
-        setPassword(value);
+        // setPassword(value);
+        dispatch(setPassword(value));
         break;
       case 'confirmPassword':
-        setConfirmPassword(value);
+        dispatch(setConfirmPassowrd(value));
         break;
       case 'nip':
-        setNip(value);
+        dispatch(setNip(value));
         break;
       case 'phone':
-        setPhone(value);
+        dispatch(setPhone(value));
         break;
       case 'role':
-        setRole(value);
+        dispatch(setRole(value));
         break;
     }
   };
 
-  // const handleChangePhone = (
-  //   e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  // ) => {
-  //   const regex = /^[0-9\b]+$/;
-  //   const { value } = e.target;
-  //   if (value === '' || (regex.test(value) && value.length <= phoneLength)) {
-  //     setPhone(value);
-  //   }
-  // };
-
-  // const handleChangeNip = (
-  //   e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  // ) => {
-  //   console.log(e);
-  //   const { value } = e.target;
-  //   const regex = /^[0-9\b]+$/;
-  //   if (value === '' || (regex.test(value) && value.length <= NipLength)) {
-  //     setNip(value);
-  //   }
-  // };
-
-  // console.log('password:', watch('password')); // watch input value by passing the name of it
   console.log('err:', errors);
-  console.log(!!errors.nip);
+  // console.log(!!errors.nip);
 
   return (
     <Box
@@ -210,7 +238,11 @@ export default function App() {
         {/* register your input into the hook by invoking the "register" function */}
 
         <Stack spacing={2} width={400}>
-          {!edit && <p>Is it everything correct ?</p>}
+          {!edit && (
+            <Typography variant="h4" component="h4">
+              Is it everything correct ?
+            </Typography>
+          )}
           <Controller
             name="email"
             control={control}
@@ -224,7 +256,7 @@ export default function App() {
                 error={!!errors.email}
                 helperText={errors.email?.message}
                 value={email}
-                onChange={(e) => handleChange(e, regexEmail)}
+                onChange={(e) => handleChange(e)}
                 disabled={!edit}
               />
             )}
@@ -324,26 +356,29 @@ export default function App() {
             )}
           />
 
-          <Button
-            type={edit ? 'submit' : 'button'}
-            variant="contained"
-            onClick={handleClick}
-          >
-            {edit ? 'Submit' : 'Edit'}
-          </Button>
-
-          {!edit && (
-            <Button variant="contained" onClick={handleRegister}>
-              Register
+          {edit ? (
+            <Button
+              type="submit"
+              variant="contained"
+              onClick={handleSubmitClick}
+            >
+              Submit
+            </Button>
+          ) : (
+            <Button type="button" variant="contained" onClick={handleEditClick}>
+              Edit
             </Button>
           )}
 
-          {/* include validation with required or other standard HTML validation rules */}
-
-          {/* <input {...register('exampleRequired', { required: true })} /> */}
-          {/* errors will return when field validation fails  */}
-
-          {/* {errors.email && <span>This field is required</span>} */}
+          {!edit && (
+            <Button
+              variant="contained"
+              onClick={handleRegister}
+              color="success"
+            >
+              Register
+            </Button>
+          )}
         </Stack>
       </form>
     </Box>
