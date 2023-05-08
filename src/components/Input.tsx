@@ -75,6 +75,7 @@ const Input: FC<IProps> = ({
       control={control}
       render={({ field }) => (
         <TextField
+          sx={{ width: '100%' }}
           {...field}
           label={label}
           type={typeInput}

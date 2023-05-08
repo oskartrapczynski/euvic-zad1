@@ -11,7 +11,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import { Stack } from '@mui/system';
-import { useEffect, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useDispatch } from 'react-redux';
@@ -70,7 +70,20 @@ const schema = yup.object().shape({
   role: yup.string().required(),
 });
 
-const Form = () => {
+interface IProps {
+  styles: () =>
+    | {
+        width: number;
+        maxWidth?: undefined;
+      }
+    | {
+        width: string;
+        maxWidth: number;
+      }
+    | undefined;
+}
+
+const Form: FC<IProps> = ({ styles }) => {
   const {
     register,
     handleSubmit,
@@ -220,7 +233,8 @@ const Form = () => {
           transform: 'translate(-50%,-50%)',
           border: '2px solid #ccc',
           borderRadius: 5,
-          p: 10,
+          p: 5,
+          width: styles,
         }}
       >
         <Box sx={{ mb: 5 }}>
@@ -238,10 +252,7 @@ const Form = () => {
             })}
           </Stepper>
         </Box>
-        {/* "handleSubmit" will validate your inputs before invoking "onSubmit" */}
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
-          {/* register your input into the hook by invoking the "register" function */}
-
           <Stack spacing={2}>
             {check && (
               <Typography variant="h4" component="h4">
