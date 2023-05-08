@@ -271,6 +271,7 @@ export default function App() {
               value={password}
               handleChange={(e) => handleChange(e)}
               disabled={check}
+              isShowPassword
             />
 
             <Input
@@ -283,6 +284,7 @@ export default function App() {
               value={confirmPassword}
               handleChange={(e) => handleChange(e)}
               disabled={check}
+              isShowPassword
             />
 
             <Input

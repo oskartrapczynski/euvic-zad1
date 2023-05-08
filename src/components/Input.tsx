@@ -1,5 +1,6 @@
-import { TextField } from '@mui/material';
-import { FC } from 'react';
+import { VisibilityOff, Visibility } from '@mui/icons-material';
+import { IconButton, InputAdornment, TextField } from '@mui/material';
+import { FC, useState } from 'react';
 import {
   Control,
   Controller,
@@ -25,6 +26,7 @@ interface IProps {
     regex?: RegExp,
     maxLength?: number
   ) => void;
+  isShowPassword?: boolean;
 }
 
 const Input: FC<IProps> = ({
@@ -39,7 +41,34 @@ const Input: FC<IProps> = ({
   disabled,
   children,
   handleChange,
+  isShowPassword,
 }) => {
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
+
+  const handleMouseDownPassword = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    event.preventDefault();
+  };
+
+  const endAdornment = isShowPassword ? (
+    <InputAdornment position="end">
+      <IconButton
+        aria-label="toggle password visibility"
+        onClick={handleClickShowPassword}
+        onMouseDown={handleMouseDownPassword}
+        edge="end"
+      >
+        {showPassword ? <VisibilityOff /> : <Visibility />}
+      </IconButton>
+    </InputAdornment>
+  ) : null;
+
+  const typeInput =
+    type === 'password' ? (showPassword ? 'text' : 'password') : type;
+
   return (
     <Controller
       name={name}
@@ -48,7 +77,7 @@ const Input: FC<IProps> = ({
         <TextField
           {...field}
           label={label}
-          type={type}
+          type={typeInput}
           variant="standard"
           {...register(name)}
           error={!!errors[name]}
@@ -58,6 +87,9 @@ const Input: FC<IProps> = ({
           disabled={disabled}
           select={select}
           children={children}
+          InputProps={{
+            endAdornment,
+          }}
         />
       )}
     />
