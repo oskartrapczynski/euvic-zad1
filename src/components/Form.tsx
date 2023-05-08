@@ -9,6 +9,8 @@ import {
   Alert,
   AlertTitle,
   MenuItem,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import { Stack } from '@mui/system';
 import { FC, useEffect, useState } from 'react';
@@ -70,20 +72,7 @@ const schema = yup.object().shape({
   role: yup.string().required(),
 });
 
-interface IProps {
-  styles: () =>
-    | {
-        width: number;
-        maxWidth?: undefined;
-      }
-    | {
-        width: string;
-        maxWidth: number;
-      }
-    | undefined;
-}
-
-const Form: FC<IProps> = ({ styles }) => {
+const Form = () => {
   const {
     register,
     handleSubmit,
@@ -113,6 +102,17 @@ const Form: FC<IProps> = ({ styles }) => {
   const [activeStep, setActiveStep] = useState(0);
 
   const [request, setRequest] = useState('');
+
+  const theme = useTheme();
+  const desktop = useMediaQuery(theme.breakpoints.up('lg'));
+  const tablet = useMediaQuery(theme.breakpoints.up('sm'));
+  const mobile = useMediaQuery(theme.breakpoints.up('xs'));
+
+  const styles = () => {
+    if (desktop) return { width: 500 };
+    if (tablet) return { width: 400 };
+    if (mobile) return { width: '90%', maxWidth: 400 };
+  };
 
   useEffect(() => {
     console.log('req', request);
