@@ -1,7 +1,5 @@
-import { useForm, SubmitHandler, Controller } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form';
 import {
-  TextField,
-  MenuItem,
   Button,
   Stepper,
   Step,
@@ -10,6 +8,7 @@ import {
   Typography,
   Alert,
   AlertTitle,
+  MenuItem,
 } from '@mui/material';
 import { Stack } from '@mui/system';
 import { useEffect, useState } from 'react';
@@ -21,7 +20,7 @@ import axios from 'axios';
 import { roles } from './form/roles';
 import { regexes } from './form/regexes';
 import { constraints } from './form/constraints';
-import { fields, TFieldsValues } from './form/fields';
+import { fields } from './form/fields';
 import {
   clearForm,
   IFormState,
@@ -75,7 +74,7 @@ export default function App() {
   const {
     register,
     handleSubmit,
-    watch,
+    // watch,
     control,
     formState: { errors },
   } = useForm<IFormInputs>({ resolver: yupResolver(schema) });
