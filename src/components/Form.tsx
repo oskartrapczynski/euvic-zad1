@@ -13,7 +13,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { Stack } from '@mui/system';
-import { FC, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useDispatch } from 'react-redux';
@@ -61,7 +61,7 @@ const schema = yup.object().shape({
     .required(),
   confirmPassword: yup
     .string()
-    .oneOf([yup.ref('password'), 'Password must be the same'])
+    .oneOf([yup.ref('password')], 'Password must be the same')
     .required(),
   nip: yup
     .string()
