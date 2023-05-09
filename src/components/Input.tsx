@@ -77,6 +77,8 @@ const Input: FC<IProps> = ({
     </InputAdornment>
   ) : null;
 
+  console.log(!!errors[name]);
+
   const typeInput =
     type === 'password' ? (showPassword ? 'text' : 'password') : type;
 
@@ -84,7 +86,7 @@ const Input: FC<IProps> = ({
     <Controller
       name={name}
       control={control}
-      render={({ field, field: { onChange } }) => (
+      render={({ field, field: { onChange, value } }) => (
         <TextField
           {...field}
           sx={{ width: '100%', borderColor: 'green' }}
@@ -94,13 +96,12 @@ const Input: FC<IProps> = ({
           {...register(name, { pattern: /[0-9]{3}/ })}
           error={!!errors[name]}
           helperText={errors[name]?.message}
-          // value={value}
-          // onChange={(e) => handleChange(e)}
           onChange={(e) => handleChange(e, onChange, regex)}
           disabled={disabled}
           select={select}
           children={children}
           InputProps={{ endAdornment }}
+          color={value.length > 0 && !errors[name] ? 'success' : 'primary'}
         />
       )}
     />
