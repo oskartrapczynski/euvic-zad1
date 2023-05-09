@@ -8,25 +8,21 @@ import {
   UseFormRegister,
 } from 'react-hook-form';
 import { TFieldsValues } from '../form/fields';
-import { IFormInputs } from '../interfaces/form/IFormInputs';
+import { FormInputs } from '../interfaces/form/FormInputs';
 
 interface IProps {
   name: TFieldsValues;
-  control: Control<IFormInputs, any>;
+  control: Control<FormInputs, any>;
   type?: string;
-  register: UseFormRegister<IFormInputs>;
-  errors: FieldErrors<IFormInputs>;
+  register: UseFormRegister<FormInputs>;
+  errors: FieldErrors<FormInputs>;
   select?: boolean;
   label: string;
-  value: string;
   disabled: boolean;
   children?: JSX.Element[];
-  handleChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    regex?: RegExp,
-    maxLength?: number
-  ) => void;
   isShowPassword?: boolean;
+  regex?: RegExp;
+  inputMode?: string;
 }
 
 const Input: FC<IProps> = ({
@@ -37,11 +33,10 @@ const Input: FC<IProps> = ({
   errors,
   select,
   label,
-  value,
   disabled,
   children,
-  handleChange,
   isShowPassword,
+  regex,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -51,6 +46,22 @@ const Input: FC<IProps> = ({
     event: React.MouseEvent<HTMLButtonElement>
   ) => {
     event.preventDefault();
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    onChange: (...event: any[]) => void,
+    regex?: RegExp
+  ) => {
+    if (!e.target) {
+      return;
+    }
+    const { value } = e.target;
+
+    if (regex && !regex.test(value)) {
+      return;
+    }
+    onChange(value);
   };
 
   const endAdornment = isShowPassword ? (
@@ -73,24 +84,23 @@ const Input: FC<IProps> = ({
     <Controller
       name={name}
       control={control}
-      render={({ field }) => (
+      render={({ field, field: { onChange } }) => (
         <TextField
-          sx={{ width: '100%' }}
           {...field}
+          sx={{ width: '100%', borderColor: 'green' }}
           label={label}
           type={typeInput}
           variant="standard"
-          {...register(name)}
+          {...register(name, { pattern: /[0-9]{3}/ })}
           error={!!errors[name]}
           helperText={errors[name]?.message}
-          value={value}
-          onChange={(e) => handleChange(e)}
+          // value={value}
+          // onChange={(e) => handleChange(e)}
+          onChange={(e) => handleChange(e, onChange, regex)}
           disabled={disabled}
           select={select}
           children={children}
-          InputProps={{
-            endAdornment,
-          }}
+          InputProps={{ endAdornment }}
         />
       )}
     />
